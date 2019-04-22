@@ -1,0 +1,207 @@
+
+#                          ___  ___        ______                 
+#                          |  \/  |       |___  /                 
+#                          | .  . |_   _     / /  ___  _ __   ___ 
+#                          | |\/| | | | |   / /  / _ \| '_ \ / _ \
+#                          | |  | | |_| | ./ /__| (_) | | | |  __/
+#                          \_|  |_/\__, | \_____/\___/|_| |_|\___|
+#                                  __/ |                         
+#                                 |___/   
+
+# |=========================================================================================|
+# |           	                          EVENTS                                            |
+# |=========================================================================================|
+
+# Sélection de la zone à protéger
+# -------------------------------
+
+on leftclick with stick:
+	if player has stick named "&4&lSuperStick":
+		cancel event
+		set {mz.%player's uuid%.a} to event-block
+		message "<yellow>Point A défini"	
+				
+on rightclick with stick:
+	if player has stick named "&4&lSuperStick":
+		if {mz.%player's uuid%.a} is set:
+			set {_b} to event-block
+			message "<yellow>Point B défini"
+			set {_a.x} to round down x-coord of {mz.%player's uuid%.a}
+			set {_a.y} to round down y-coord of {mz.%player's uuid%.a}
+			set {_a.z} to round down z-coord of {mz.%player's uuid%.a}
+			set {_b.x} to round down x-coord of {_b}
+			set {_b.y} to round down y-coord of {_b}
+			set {_b.z} to round down z-coord of {_b}
+		   
+			if {_a.x} is smaller than {_b.x}:
+				set {_ab.x} to "%{_a.x}%,%{_b.x}%"
+			else:
+				set {_ab.x} to "%{_b.x}%,%{_a.x}%"
+		   
+			if {_a.y} is smaller than {_b.y}:
+				set {_ab.y} to "%{_a.y}%,%{_b.y}%"
+			else:
+				set {_ab.y} to "%{_b.y}%,%{_a.y}%"
+				   
+			if {_a.z} is smaller than {_b.z}:
+				set {_ab.z} to "%{_a.z}%,%{_b.z}%"
+			else:
+				set {_ab.z} to "%{_b.z}%,%{_a.z}%"
+
+			set {mz.%player's uuid%.selectedArea} to "%{_ab.x}%,%{_ab.y}%,%{_ab.z}%"
+		else:
+			message "<pink>Veuillez d'abord sélectionner le point A"
+
+# Vérifie si le joueur à le droit d'intéragir avec la zone cliquée
+# ----------------------------------------------------------------
+			
+on click:
+	loop {mz.players::*}:
+		set {_data::*} to loop-value split by "|"
+		set {_uuid} to {_data::1}
+		set {_pseudo} to {_data::2}
+		loop {mz.players::%loop-index%::zones::*}:
+			set {_data::*} to loop-value-2 split at "|"
+			set {_name} to {_data::1}
+			set {_coords::*} to {_data::2} split at ","
+			loop {_coords::*}:
+				set {_coord_%loop-index-3%} to loop-value-3 parsed as number
+
+			if round down x-coord of event-block is between {_coord_1} and {_coord_2}:
+				if round down y-coord of event-block is between {_coord_3} and {_coord_4}:
+					if round down z-coord of event-block is between {_coord_5} and {_coord_6}:
+						if player's uuid isn't {_uuid}:
+							cancel event
+							
+						if player's tool is a feather:
+							cancel event
+							send "&cLa zone &r%{_name}%&c appartient à &r%{_pseudo}% - %{_data::2}%"
+								
+		
+# |=========================================================================================|
+#                                  -== COMMANDES JOUEURS ==-
+# |=========================================================================================|
+
+
+# Ajoute une zone protégée dans la liste du joueur
+# ------------------------------------------------
+
+command /mzstick:
+	trigger:
+		give 1 stick named "&4&lSuperStick" to player
+
+# Ajoute une zone protégée dans la liste du joueur
+# ------------------------------------------------
+
+command /mzaddzone <text>:
+	usage: &e/mz <nom de la zone>
+	permission: sk.myzone.mzaddzone
+	permission message: &cVous n'êtes pas autorisé à utiliser cette commande
+	trigger:
+		if {mz.%player's uuid%.selectedArea} is set:
+			set {_playerFound} to false
+			loop 2 times:
+				if {_playerFound} is true:
+					exit loop
+				else:
+					loop {mz.players::*}:
+						set {_data::*} to loop-value split by "|"
+						if player's uuid is {_data::1}:
+							set {_playerFound} to true
+							add "%arg-1%|%{mz.%player's uuid%.selectedArea}%" to {mz.players::%loop-index%::zones::*}
+							exit loop
+							
+					if {_playerFound} is false:
+						add "%player's uuid%|%player%" to {mz.players::*}
+				
+			send "&aLa zone nommée &r""%arg-1%"" &aà bien été ajoutée ! " to player
+			clear {mz.%player's uuid%.a}
+			clear {mz.%player's uuid%.selectedArea}
+		else:
+			send "&cVeuillez sélectionner une zone d'abord"
+			
+# Liste les zones du joueur
+# -------------------------
+
+command /mzmyzones:
+	usage: &e/mzremovezone <id de la zone>
+	permission: sk.myzone.mzmyzones
+	permission message: &cVous n'êtes pas autorisé à utiliser cette commande
+	trigger:
+		set {_playerFound} to false
+		loop {mz.players::*}:
+			set {_data::*} to loop-value split by "|"
+			if player's uuid is {_data::1}:
+				set {_playerFound} to true
+				loop {mz.players::%loop-index%::zones::*}:
+					set {_data::*} to loop-value-2 split by "|"
+					set {_name} to {_data::1}
+					send "&eId : &r%loop-index-2% - &eNom de la zone : &r%{_name}%" to player
+				exit loop
+		
+		if {_playerFound} is false:
+			send "&cVous n'êtes propriétaire d'aucune zone"
+				
+# Suppresion d'une des zones du joueur
+# ------------------------------------
+		
+command /mzremovezone <int>:
+	usage: &e/mzremovezone <id de la zone>
+	permission: sk.myzone.mzremovezone
+	permission message: &cVous n'êtes pas autorisé à utiliser cette commande
+	trigger:
+		set {_playerFound} to false
+		loop {mz.players::*}:
+			set {_data::*} to loop-value split by "|"
+			if player's uuid is {_data::1}:
+				set {_playerFound} to true
+				if {mz.players::%loop-index%::zones::%arg-1%} is set:
+					set {_data::*} to {mz.players::%loop-index%::zones::%arg-1%} split by "|"
+					set {_name} to {_data::1}
+					clear {mz.players::%loop-index%::zones::%arg-1%}
+					send "&aLa zone &r%{_name}% &aayant l'id &r%arg-1% &aa bien été supprimée ! "
+					if {mz.players::%loop-index%::zones::*} isn't set:
+						clear {mz.players::%loop-index%}
+				else:
+					send "&cCet id n'existe pas" to player	
+				exit loop
+				
+		if {_playerFound} is false:
+			send "&cVous n'êtes propriétaire d'aucune zone"		
+			
+			
+# |=========================================================================================|
+#                                   -== COMMANDES ADMINS ==-
+# |=========================================================================================|
+
+
+# Liste les propriétaires des zones
+# ---------------------------------
+	
+command /mzowners:
+	permission: sk.myzone.mzowners
+	permission message: &cVous n'êtes pas autorisé à utiliser cette commande
+	trigger:
+		if {mz.players::*} is set:
+			loop {mz.players::*}:
+				set {_data::*} to loop-value split by "|"
+				set {_uuid} to {_data::1}
+				set {_pseudo} to {_data::2}
+				send "&eId : &r%loop-index% - &eUuid : &r%{_uuid}% - &ePseudo : &r%{_pseudo}%"
+		else:
+			send "&cIl n'existe aucun propriétaire de zones actuellement"
+				
+# Supprime le propriétaire sélectionné
+# ------------------------------------
+				
+command /mzremoveowner <int>:
+	usage: &e/mzremoveowner <id du propriétaire>
+	permission: sk.myzone.mzremoveowner
+	permission message: &cVous n'êtes pas autorisé à utiliser cette commande
+	trigger:
+		if {mz.players::%arg-1%} is set:
+			clear {mz.players::%arg-1%::zones::*}
+			clear {mz.players::%arg-1%}
+			send "&aLe propriétaire ainsi que toutes ses zones ont été supprimés"
+		else:
+			send "&cCet id n'existe pas" to player

@@ -1,0 +1,318 @@
+
+#       _____ _    __  __           _                 _                    __          ___          _               
+#      / ____| |  |  \/  |         | |               (_)                _  \ \        / (_)        | |              
+#     | (___ | | _| \  / | ___  ___| |__   __ _ _ __  _ ___ _ __ ___   (_)  \ \  /\  / / _ _ __ ___| | ___  ___ ___ 
+#      \___ \| |/ / |\/| |/ _ \/ __| '_ \ / _` | '_ \| / __| '_ ` _ \        \ \/  \/ / | | '__/ _ \ |/ _ \/ __/ __|
+#      ____) |   <| |  | |  __/ (__| | | | (_| | | | | \__ \ | | | | |  _     \  /\  /  | | | |  __/ |  __/\__ \__ \
+#     |_____/|_|\_\_|  |_|\___|\___|_| |_|\__,_|_| |_|_|___/_| |_| |_| (_)     \/  \/   |_|_|  \___|_|\___||___/___/
+#
+
+
+
+# ===================================================================================
+#                                     OPTIONS
+# ===================================================================================
+
+# Vous pouvez modifier la syntaxe de l'option " transmitter " et " receiver "
+# mais n'y retouchez plus par la suite sinon les panneaux des joueurs ne réagiront plus.
+# --------------------------------------------------------------------------------------
+options:
+    transmitter : §4[§rtx§4]
+    receiver : §4[§rrx§4]
+    notification : &7[ &aNotification &7] ->
+    alert : &7[ &cAlert &7] ->
+    
+# ===================================================================================
+#                           CREATION EMETTEUR ET RECEPTEUR
+# ===================================================================================
+
+# Ajoute un émetteur (transmitter) ou un récepteur (receiver) au réseau (network) mentionné sur le panneau
+# -------------------------------------------------------------------------------------------------------
+on sign change:
+
+    # Coloration des textes sur le panneau
+    # ------------------------------------
+    replace every "&" with "§" in line 1
+    replace every "&" with "§" in line 2
+    replace every "&" with "§" in line 3
+    replace every "&" with "§" in line 4
+    
+    if line 2 is "tx":
+        if line 3 isn't "":
+            set line 2 to "{@transmitter}"
+            set line 4 to "%player%"
+            message "{@notification} Emetteur défini sur le réseau %line 3%" to player
+            set {_type} to "transmitters"
+            
+    if line 2 is "rx":
+        if line 3 isn't "":
+            set line 2 to "{@receiver}"
+            set line 4 to "%player%"
+            message "{@notification} Récepteur défini sur le réseau %line 3%" to player
+            if facing of event-block is north:
+                set block 2 behind event-block to lever:3
+            if facing of event-block is south:
+                set block 2 behind event-block to lever:4
+            if facing of event-block is east:
+                set block 2 behind event-block to lever:2
+            if facing of event-block is west:
+                set block 2 behind event-block to lever:1
+            set {_type} to "receivers"
+    
+    if {_type} is set:
+        set {_existingNetwork} to false
+        loop 2 times:
+            if {_existingNetwork} is true:
+                exit loop
+            else:
+                loop {skm.wireless.%player's uuid%::networks::*}:
+                    if uncoloured loop-value-2 is uncoloured line 3:
+                        set {_existingNetwork} to true
+                        add location of event-block to {skm.wireless.%player's uuid%::networks::%loop-index%::%{_type}%::*}
+                        exit loop
+                        
+                if {_existingNetwork} is false:
+                    add line 3 to {skm.wireless.%player's uuid%::networks::*}
+    
+
+    
+# ===================================================================================
+#            SUPPRESSION EMETTEUR OU RECEPTEUR AU CASSAGE D'UN PANNEAU
+# ===================================================================================
+
+# Si un joueur casse le panneau d'un réseau (network), l'émetteur (transmitter) ou le récepteur (receiver) qui lui est lié sera supprimé de ce réseau
+# ---------------------------------------------------------------------------------------------------------------------------------------------------                
+on break of wall sign:
+    if uncoloured line 2 is uncoloured "{@transmitter}":
+        set {_type} to "Emetteur|transmitters"
+    if uncoloured line 2 is uncoloured "{@receiver}":
+        set {_type} to "Récepteur|receivers"
+    if {_type} is set:
+        set {_data::*} to {_type} split by "|"
+        loop {skm.wireless.%player's uuid%::networks::*}:
+            set {_network} to loop-value-1
+            if uncoloured loop-value is uncoloured line 3:
+                loop {skm.wireless.%player's uuid%::networks::%loop-index-1%::%{_data::2}%::*}:
+                    if loop-value-2 is location at event-block:
+                        if {_data::2} is "receivers":
+                            set block 2 behind event-block to air
+                        clear {skm.wireless.%player's uuid%::networks::%loop-index-1%::%{_data::2}%::%loop-index-2%}
+                        message "{@notification} %{_data::1}% supprimé du réseau %{_network}%" to player
+                        
+                # Si tous les émetteurs (transmitters) et récepteurs (receivers) d'un réseau (network) ont été supprimés
+                # On supprime le réseau lui-même.
+                # --------------------------------------------------------------------------------------------
+                if {skm.wireless.%player's uuid%::networks::%loop-index-1%::transmitters::*} isn't set:
+                    if {skm.wireless.%player's uuid%::networks::%loop-index-1%::receivers::*} isn't set:
+                        clear {skm.wireless.%player's uuid%::networks::%loop-index-1%}
+                        message "{@notification} Réseau %{_network}% &7vide."
+                        message "{@notification} Suppression du réseau."
+                        
+        
+
+# ===================================================================================
+#              SUPPRESSION EMETTEUR OU RECEPTEUR AU CASSAGE D'UN BLOC
+# ===================================================================================        
+
+on break:
+    # Liste de directions qui serviront à regarder autour du bloc cassé si un panneau est présent
+    # --------------------------------------------------------------------------------------------
+    set {_directions::1} to in front of
+    set {_directions::2} to behind
+    set {_directions::3} to left
+    set {_directions::4} to right
+    
+    # Si un panneau est détecté, on teste son orientation afin de s'assurer qu'il appartient bien
+    # au bloc cassé (on vérifie si il est bien collé dessus).
+    # --------------------------------------------------------------------------------------------
+    
+    set {_orientations::1} to south
+    set {_orientations::2} to north
+    set {_orientations::3} to east
+    set {_orientations::4} to west
+    
+    loop {_directions::*}:
+        if block loop-value-1 event-block is a wall sign:
+            if facing of block loop-value-1 event-block is {_orientations::%loop-index-1%}: 
+                if uncoloured line 2 of block loop-value-1 event-block is uncoloured "{@transmitter}":
+                    set {_type} to "Emetteur|transmitters"
+                if uncoloured line 2 of block loop-value-1 event-block is uncoloured "{@receiver}":
+                    set {_type} to "Récepteur|receivers"
+                if {_type} is set:
+                    set {_data::*} to {_type} split by "|"
+                    loop {skm.wireless.%player's uuid%::networks::*}:
+                        set {_network} to loop-value-2
+                        if uncoloured loop-value-2 is uncoloured line 3 of block loop-value-1 event-block:
+                            loop {skm.wireless.%player's uuid%::networks::%loop-index-2%::%{_data::2}%::*}:
+                                if loop-value-3 is location of block loop-value-1 event-block:
+                                    clear {skm.wireless.%player's uuid%::networks::%loop-index-2%::%{_data::2}%::%loop-index-3%}
+                                    message "{@notification} %{_data::1}% supprimé du réseau %{_network}%" to player
+                                    
+                        # Si tous les émetteurs (transmitters) et récepteurs (receivers) d'un réseau (network) ont été supprimés
+                        # On supprime le réseau lui-même.
+                        # --------------------------------------------------------------------------------------------
+                        if {skm.wireless.%player's uuid%::networks::%loop-index-2%::transmitters::*} isn't set:
+                            if {skm.wireless.%player's uuid%::networks::%loop-index-2%::receivers::*} isn't set:
+                                clear {skm.wireless.%player's uuid%::networks::%loop-index-2%}
+                                message "{@notification} Réseau %{_network}% &7vide." to player
+                                message "{@notification} Suppression du réseau." to player
+                        
+                        
+# ===================================================================================
+#                     TRANSMISSION SIGNAL EMETTEUR => RECEPTEUR
+# ===================================================================================        
+    
+# Si un signal redstone est transmis à un panneau et que celui-ci est un émetteur, une recherche
+# du propriétaire sera effectué afin que les récepteurs de celui-ci soit activés.
+# ---------------------------------------------------------------------------------------    
+on redstone:
+    set {_directions::1} to in front of
+    set {_directions::2} to behind
+    set {_directions::3} to left
+    set {_directions::4} to right
+    loop {_directions::*}:
+        if block loop-value-1 event-block is a sign:
+            if uncoloured line 2 of block loop-value-1 event-block is uncoloured "{@transmitter}":
+                loop players:
+                    loop {skm.wireless.%loop-player's uuid%::networks::*}:
+                        if uncoloured loop-value-3 is uncoloured line 3 of block loop-value-1 event-block:
+                            loop {skm.wireless.%loop-player's uuid%::networks::%loop-index-2%::transmitters::*}:
+                                if location of block loop-value-1 event-block is loop-value-4:
+                                    loop {skm.wireless.%loop-player's uuid%::networks::%loop-index-2%::receivers::*}:
+                                        toggle block 2 behind block at loop-value-5
+
+
+        
+# ===================================================================================
+#                     LISTES DES RESEAUX & EMETTEURS / RECEPTEURS
+# ===================================================================================
+
+command /skm-wireless-help:
+    trigger:
+        message "&7&l╔&f&l═&7&l═&f&l═&7&l═&f&l═&7&l═&f&l═&7&l═&f&l═&7&l═&f&l═[ &3&lAide &f&l]═&7&l═&f&l═&f&l═&7&l═&f&l═&7&l═&f&l═&7&l═&f&l═&7&l╣"
+        # Liste réseaux
+        # ----------------------------
+        message "&f║ &7Liste tous vos réseaux ""&3ID &r- &3Nom&r"""
+        message "&f║ &7------------------------------------------"
+        message "&f║ &e/skm-wireless-networks :"
+        message "&f║"
+        # Liste émetteurs / récepteurs
+        # ----------------------------
+        message "&f║ &7Liste émetteurs/récepteurs d'un réseau par son &3ID réseau"
+        message "&f║ &7------------------------------------------"
+        message "&f║ &e/skm-wireless-networks <&3ID réseau&e> :"
+        message "&f║"
+        # Suppression réseau
+        # ----------------------------
+        message "&f║ &7Supprime un réseau par son &3ID réseau"
+        message "&f║ &7------------------------------------------"
+        message "&f║ &e/skm-wireless-networks <&3ID réseau&e> remove :"
+        message "&f║"
+        # tp
+        # ----------------------------
+        message "&f║ &7Vous téléporte à un émetteur ou récepteur par son &3ID"
+        message "&f║ &7------------------------------------------"
+        message "&f║ &e/skm-wireless-tp <&3transmitter&e|&3receiver&e> <&3network ID&e> <&3ID&e> :"
+        message "&7&l╔&f&l═&7&l═&f&l═&7&l═&f&l═&7&l═&f&l═&7&l═&f&l═&7&l═&f&l═[ &3&lAide &f&l]═&7&l═&f&l═&f&l═&7&l═&f&l═&7&l═&f&l═&7&l═&f&l═&7&l╣"
+        
+        
+
+# ===================================================================================
+#                     LISTES DES RESEAUX & EMETTEURS / RECEPTEURS
+# ===================================================================================
+                    
+command /skm-wireless-networks [<int>] [<text>]:
+    usage: &c/skm-wireless-networks [<network ID>] [<remove>]
+    trigger:
+    
+        # Si aucun réseau n'est sélectionné, affichage de tous les réseaux du joueur
+        # --------------------------------------------------------------------------
+        if int-arg isn't set:
+            if {skm.wireless.%player's uuid%::networks::*} is not empty:
+                message "&7&l╔&f&l═&7&l═&f&l═&7&l═&f&l═&7&l═&f&l═&7&l═&f&l═&7&l═&f&l═[ &c&lRéseaux &f&l]═&7&l═&f&l═&f&l═&7&l═&f&l═&7&l═&f&l═&7&l═&f&l═&7&l╣"
+                loop {skm.wireless.%player's uuid%::networks::*}:
+                    message "&f║ &eID : &r%loop-index% - &eNom : &r%loop-value%"
+                message "&7&l╔&f&l═&7&l═&f&l═&7&l═&f&l═&7&l═&f&l═&7&l═&f&l═&7&l═&f&l═[ &c&lRéseaux &f&l]═&7&l═&f&l═&f&l═&7&l═&f&l═&7&l═&f&l═&7&l═&f&l═&7&l╣"
+            else:
+                message "&7&l╔&f&l═&7&l═&f&l═&7&l═&f&l═&7&l═&f&l═&7&l═&f&l═&7&l═&f&l═[ &c&lRéseaux &f&l]═&7&l═&f&l═&f&l═&7&l═&f&l═&7&l═&f&l═&7&l═&f&l═&7&l╣"
+                message "{@alert} Aucun réseau existant" to player
+                message "&7&l╔&f&l═&7&l═&f&l═&7&l═&f&l═&7&l═&f&l═&7&l═&f&l═&7&l═&f&l═[ &c&lRéseaux &f&l]═&7&l═&f&l═&f&l═&7&l═&f&l═&7&l═&f&l═&7&l═&f&l═&7&l╣"
+                
+        # Sinon suite d'opérations sur le réseau sélectionné
+        # --------------------------------------------------------------------------
+        else:
+            if {skm.wireless.%player's uuid%::networks::%int-arg%} is set:
+                set {_network} to {skm.wireless.%player's uuid%::networks::%int-arg%}
+                
+                # Si l'argument " remove " est renseigné, supression du réseau sélectionné + émetteurs / récepteurs
+                # -------------------------------------------------------------------------------------------------
+                if text-arg is "remove":
+                    
+                    # Supression de tous les émetteurs (transmitters) du réseau
+                    # ---------------------------------------------------------
+                    loop {skm.wireless.%player's uuid%::networks::%int-arg%::transmitters::*}:
+                        set block at loop-value to air # Supprime le panneau de l'émetteur
+                    clear {skm.wireless.%player's uuid%::networks::%int-arg%::transmitters::*}
+                    
+                    # Supression de tous les récepteurs (receiver) du réseau
+                    # ----------------------------------------------------------
+                    loop {skm.wireless.%player's uuid%::networks::%int-arg%::receivers::*}:
+                        set block 2 behind the block at loop-value to air # Supprime le levier derrière le récepteur
+                        wait 1 tick
+                        set block at loop-value to air # Supprime le panneau du récepteur 
+                    clear {skm.wireless.%player's uuid%::networks::%int-arg%::receivers::*}
+                        
+                    # Supression du réseau lui-même
+                    # ----------------------------------------------------------
+                    clear {skm.wireless.%player's uuid%::networks::%int-arg%}
+                        
+                    message "{@notification} Le réseau &r%{_network}% &7ainsi que tous les émetteurs / récepteurs ont bien été supprimés" to player
+                
+                # Sinon affichage des émetteurs et récepteurs du réseau sélectionné
+                # -----------------------------------------------------------------------------
+                else:
+                    set {_types::1} to "émetteurs|transmitters"
+                    set {_types::2} to "récepteurs|receivers"
+                    message "&7&l╔&f&l═&7&l═&f&l═&7&l═&f&l═&7&l═&f&l═&7&l═&f&l═&7&l═&f&l═[ &7&l%{_network}% &f&l]═&7&l═&f&l═&f&l═&7&l═&f&l═&7&l═&f&l═&7&l═&f&l═&7&l╣"
+                    loop {_types::*}:
+                        set {_data::*} to loop-value split by "|"
+                        if {skm.wireless.%player's uuid%::networks::%int-arg%::%{_data::2}%::*} is set: 
+                            message "&f║ &7Liste des %{_data::1}% et de leur position :"
+                            message "&f║ &7------------------------------------------"
+                            loop {skm.wireless.%player's uuid%::networks::%int-arg%::%{_data::2}%::*}: 
+                                set {_description} to line 1 of block at loop-value-2
+                                if {_description} is "":
+                                    message "&f║ &eID : &r%loop-index-2% - &ePosition : &r%loop-value-2%"
+                                else:
+                                    message "&f║ &eID : &r%loop-index-2% - &ePosition : &r%loop-value-2%"
+                                    message "&f║ &eDescription : &r%{_description}%"
+                    message "&7&l╔&f&l═&7&l═&f&l═&7&l═&f&l═&7&l═&f&l═&7&l═&f&l═&7&l═&f&l═[ &7&l%{_network}% &f&l]═&7&l═&f&l═&f&l═&7&l═&f&l═&7&l═&f&l═&7&l═&f&l═&7&l╣" 
+            else:
+                message "{@alert} L'ID de ce réseau n'éxiste pas" to player
+                    
+                    
+# ===================================================================================
+#                 TELEPORTATION AUX EMETTEURS / RECEPTEURS D'UN RESEAU
+# ===================================================================================                    
+                    
+command /skm-wireless-tp <text> <int> <int>:
+    usage: &c/skm-wireless-tp <transmitter|receiver> <network ID> <transmitter|receiver ID>
+    trigger:
+        if arg-1 is "transmitter":
+            set {_type} to "cet émetteur|transmitters"
+        else if arg-1 is "receiver":
+            set {_type} to "ce récepteur|receivers"
+        else:
+            message "{@alert} La commande est incorrecte." to player
+            message "{@alert} Veuillez suivre le modèle ci-dessous :" to player
+            message "{@alert} /skm-wireless-tp <transmitter|receiver> <network ID> <transmitter ID|receiver ID>" to player
+            exit trigger
+        if {_type} is set:
+            set {_data::*} to {_type} split by "|"
+            if {skm.wireless.%player's uuid%::networks::%arg-2%} is set:
+                if {skm.wireless.%player's uuid%::networks::%arg-2%::%{_data::2}%::%arg-3%} is set:
+                    teleport player to {skm.wireless.%player's uuid%::networks::%arg-2%::%{_data::2}%::%arg-3%}
+                else:
+                    message "&cL'ID de %{_data::1}% n'existe pas" to player
+            else:
+                message "{@alert} L'ID de ce réseau n'existe pas" to player

@@ -1,0 +1,51 @@
+
+options:
+	toggleable : button, lever or pressure plate
+
+on right click on {@toggleable}:
+
+	# On stocke toutes les directions possibles pour tester les blocs adjacents.
+	# -------------------------------------------------------------------------
+	set {_directions::1} to in front of
+	set {_directions::2} to behind
+	set {_directions::3} to left
+	set {_directions::4} to right
+	set {_directions::5} to above
+	set {_directions::6} to below
+	
+	set {_location} to location of event-block # on memorise la position du premier block sur lequel se fait le clique (levier, boutton, etc.)
+	
+	# On définit l'état courant du cable {_cable_state}, c'est à dire le type de blocs courants représentant le cable.
+	# ------------------------------------------------------------------------------------------------------------------
+	loop {_directions::*}:
+		if block loop-value block at {_location} is red wool:
+			set {_cable_state} to a red wool
+			set {_switch_cable} to a green wool
+		if block loop-value block at {_location} is green wool:
+			set {_cable_state} to a green wool
+			set {_switch_cable} to a red wool
+
+	# Tant que la variable {_spread} vaut true, c'est qu'un nouveau segment de cable a été trouvé ; le signal continue donc de se propager.
+	# -------------------------------------------------------------------------------------------------------------------------------------
+	set {_spread} to true
+	while {_spread} is true:
+	
+		set {_newCableFound} to false
+		
+		loop {_directions::*}:
+			if block loop-value block at {_location} is {_cable_state}:
+				set block at {_location} to {_switch_cable}
+				set {_location} to location of block loop-value block at {_location}
+				set {_newCableFound} to true
+				exit 1 section
+			if block loop-value block at {_location} is a yellow wool:
+				set {_location}
+				
+		if {_newCableFound} is false:
+			set block at {_location} to {_switch_cable}
+			set {_spread} to false
+		
+	# On commute (active) le bloc adjacent au dernier segment de cable (ex: une porte)
+	# --------------------------------------------------------------------------------
+	loop {_directions::*}:
+		toggle the block loop-value block at {_location}

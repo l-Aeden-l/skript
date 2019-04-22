@@ -1,0 +1,226 @@
+options:
+	entry : light blue concrete
+	exit : orange concrete
+
+on left click with a stick:
+	cancel event
+	if targeted block is not {@entry} or {@exit}:
+		if block above targeted block is not {@entry} or {@exit}:
+			if block below targeted block is not {@entry} or {@exit}:	
+				if {blue.initialState::*} is set:
+					loop {blue.initialState::*}:
+						set {_data::*} to loop-value split by "|"
+						set {_block} to {_data::1} parsed as item
+						set {_coord::*} to {_data::2} split by ","
+						set {_x} to {_coord::1} parsed as number
+						set {_y} to {_coord::2} parsed as number
+						set {_z} to {_coord::3} parsed as number
+						set block at location {_x}, {_y}, {_z} to {_block}
+					
+					clear {blue.initialState::*}
+			
+				set {_x.bottom} to x-coord of targeted block's location
+				set {_y.bottom} to y-coord of targeted block's location
+				set {_z.bottom} to z-coord of targeted block's location
+				
+				set {_loc::-1} to target block's x-coordinate-player's x-coordinate
+				set {_loc::1} to target block's z-coordinate-player's z-coordinate
+				set {_yaw} to player's yaw
+				set {_a::-1} to tan({_yaw})
+				set {_a::1} to 1/tan({_yaw})
+				loop -1 and 1:
+					set {_1} to {_loc::%loop-value%}-(0.5)
+					loop integers between 0 and 1:
+						set {_a} to {_a::%loop-value-1%}
+						set {_result} to ({_1}+loop-value-2)/({_a})
+						if {_result} > 0-(({_loc::%0-(loop-value-1)%}) + 0.5):
+							if {_result} < 0-(({_loc::%0-(loop-value-1)%}) - 0.5):
+								add sqrt({_result}^2+({_1}+loop-value-2)^2) to {_result::dist::*}
+								add loop-value-1 to {_result::dim::*}
+								add loop-value-2 to {_result::cote::*}
+				set {_top} to 100000
+				loop {_result::dist::*}:
+					if loop-value < {_top}:
+						set {_top} to loop-value
+						set {_dim} to {_result::dim::%loop-index%}
+						set {_cote} to {_result::cote::%loop-index%}
+				if {_dim} = -1:
+					if {_cote} = 1:
+						set {_direction} to "east"
+					else:
+						set {_direction} to "west"
+				else:
+					if {_cote} = 1:
+						set {_direction} to "south"
+					else:
+						set {_direction} to "north"
+				
+				add "%targeted block%|%{_x.bottom}%,%{_y.bottom}%,%{_z.bottom}%|%{_direction}%" to {blue.initialState::*}
+				
+				set {_x.top} to x-coord of block above targeted block's location
+				set {_y.top} to y-coord of block above targeted block's location
+				set {_z.top} to z-coord of block above targeted block's location
+				add "%block above targeted block%|%{_x.top}%,%{_y.top}%,%{_z.top}%" to {blue.initialState::*}
+				
+				set targeted block to {@entry}
+				set block above targeted block to {@entry}
+	
+on right click with a stick:
+	if targeted block is not {@exit} or {@entry}:
+		if block above targeted block is not {@exit} or {@entry}:
+			if block below targeted block is not {@exit} or {@entry}:
+				
+				if {red.initialState::*} is set:
+					loop {red.initialState::*}:
+						set {_data::*} to loop-value split by "|"
+						set {_block} to {_data::1} parsed as item
+						set {_coord::*} to {_data::2} split by ","
+						set {_x} to {_coord::1} parsed as number
+						set {_y} to {_coord::2} parsed as number
+						set {_z} to {_coord::3} parsed as number
+						set block at location {_x}, {_y}, {_z} to {_block}
+					
+					clear {red.initialState::*}
+			
+				set {_x.bottom} to x-coord of targeted block's location
+				set {_y.bottom} to y-coord of targeted block's location
+				set {_z.bottom} to z-coord of targeted block's location
+
+				set {_loc::-1} to target block's x-coordinate-player's x-coordinate
+				set {_loc::1} to target block's z-coordinate-player's z-coordinate
+				set {_yaw} to player's yaw
+				set {_a::-1} to tan({_yaw})
+				set {_a::1} to 1/tan({_yaw})
+				loop -1 and 1:
+					set {_1} to {_loc::%loop-value%}-(0.5)
+					loop integers between 0 and 1:
+						set {_a} to {_a::%loop-value-1%}
+						set {_result} to ({_1}+loop-value-2)/({_a})
+						if {_result} > 0-(({_loc::%0-(loop-value-1)%}) + 0.5):
+							if {_result} < 0-(({_loc::%0-(loop-value-1)%}) - 0.5):
+								add sqrt({_result}^2+({_1}+loop-value-2)^2) to {_result::dist::*}
+								add loop-value-1 to {_result::dim::*}
+								add loop-value-2 to {_result::cote::*}
+				set {_top} to 100000
+				loop {_result::dist::*}:
+					if loop-value < {_top}:
+						set {_top} to loop-value
+						set {_dim} to {_result::dim::%loop-index%}
+						set {_cote} to {_result::cote::%loop-index%}
+				if {_dim} = -1:
+					if {_cote} = 1:
+						set {_direction} to "east"
+					else:
+						set {_direction} to "west"
+				else:
+					if {_cote} = 1:
+						set {_direction} to "south"
+					else:
+						set {_direction} to "north"
+				
+				add "%targeted block%|%{_x.bottom}%,%{_y.bottom}%,%{_z.bottom}%|%{_direction}%" to {red.initialState::*}
+				
+				set {_x.top} to x-coord of block above targeted block's location
+				set {_y.top} to y-coord of block above targeted block's location
+				set {_z.top} to z-coord of block above targeted block's location
+				add "%block above targeted block%|%{_x.top}%,%{_y.top}%,%{_z.top}%" to {red.initialState::*}
+				
+				set targeted block to {@exit}
+				set block above targeted block to {@exit}
+
+every 3 tick:
+	loop players:
+		loop blocks in radius 1 around the loop-player:
+			if loop-block is {@entry}:
+				set {_data::*} to {red.initialState::1} split by "|"
+				set {_coord::*} to {_data::2} split by ","
+				set {_direction} to {_data::3}
+				set {_x} to {_coord::1} parsed as number
+				set {_y} to {_coord::2} parsed as number
+				set {_z} to {_coord::3} parsed as number
+				if {_direction} is "north":
+					remove 1.1 from {_z}
+					set {_yaw} to 180
+				if {_direction} is "south":
+					add 1.1 to {_z}
+					set {_yaw} to 0
+				if {_direction} is "east":
+					add 1.1 to {_x}
+					set {_yaw} to 270
+				if {_direction} is "west":
+					remove 1.1 from {_x}
+					set {_yaw} to 90	
+				#set {_location} to location {_x}, {_y}, {_z} of the world "world"
+				#set {_location}'s yaw to {_yaw}
+				#teleport loop-player to {_location}
+				execute console command "/tp %loop-player% %{_x}% %{_y}% %{_z}% %{_yaw}% 0"
+
+			if loop-block is {@exit}: 
+				set {_data::*} to {blue.initialState::1} split by "|"
+				set {_coord::*} to {_data::2} split by ","
+				set {_direction} to {_data::3}
+				set {_x} to {_coord::1} parsed as number
+				set {_y} to {_coord::2} parsed as number
+				set {_z} to {_coord::3} parsed as number
+				if {_direction} is "north":
+					remove 1.1 from {_z}
+					set {_yaw} to 180
+				if {_direction} is "south":
+					add 1.1 to {_z}
+					set {_yaw} to 0
+				if {_direction} is "east":
+					add 1.1 to {_x}
+					set {_yaw} to 270
+				if {_direction} is "west":
+					remove 1.1 from {_x}
+					set {_yaw} to 90	
+				#set {_location} to location {_x}, {_y}, {_z} of the world "world"
+				#set {_location}'s yaw to {_yaw}
+				#teleport loop-player to {_location}
+				execute console command "/tp %loop-player% %{_x}% %{_y}% %{_z}% %{_yaw}% 0"
+
+
+command /cleardata:
+	trigger:
+		clear {blue.initialState::*}
+		clear {red.initialState::*}
+		send "&2Tous les portails ont été supprimés" to player
+		
+command /test:
+	trigger:
+		set {_test} to target block's x-coordinate-player's x-coordinate
+		broadcast "%{_test}%"
+	
+command /direction:
+    trigger:
+        set {_loc::-1} to target block's x-coordinate-player's x-coordinate
+        set {_loc::1} to target block's z-coordinate-player's z-coordinate
+        set {_yaw} to player's yaw
+        set {_a::-1} to tan({_yaw})
+        set {_a::1} to 1/tan({_yaw})
+        loop -1 and 1:
+            set {_1} to {_loc::%loop-value%}-(0.5)
+            loop integers between 0 and 1:
+                set {_a} to {_a::%loop-value-1%}
+                set {_result} to ({_1}+loop-value-2)/({_a})
+                if {_result} > 0-(({_loc::%0-(loop-value-1)%}) + 0.5):
+                    if {_result} < 0-(({_loc::%0-(loop-value-1)%}) - 0.5):
+                        add sqrt({_result}^2+({_1}+loop-value-2)^2) to {_result::dist::*}
+                        add loop-value-1 to {_result::dim::*}
+                        add loop-value-2 to {_result::cote::*}
+        set {_top} to 100000
+        loop {_result::dist::*}:
+            if loop-value < {_top}:
+                set {_top} to loop-value
+                set {_dim} to {_result::dim::%loop-index%}
+                set {_cote} to {_result::cote::%loop-index%}
+        if {_dim} = -1:
+            if {_cote} = 1:
+                send "east"
+            else:
+                send "west"
+        else:
+            if {_cote} = 1:
+                send "south"
+            else:
+                send "north"
