@@ -1,0 +1,390 @@
+# Comment fonctionnent les patterns ?
+# -----------------------------------
+# - Les éléments entre pourcentages %...% représentent les types.
+# Ce sont des données (nombre, texte, données spécifiques du jeu [temps, blocs, entités, etc.])
+# - Les éléments entre crochets [...] représentent des données optionnelles - qui peuvent être omises.
+# - Les éléments entre parenthèses (...|...|...), séparés par des barres verticales ( | = ou), signifient
+# que l'un des éléments présents doit être obligatoirement écrit.
+
+
+# At Time (depuis 1.3.4) - A un moment de la journée
+# at %time% [in %worlds%]
+at 12:00:
+	broadcast "&9Il est : &7%time in ""world""%&9, l'heure de manger !"
+	
+# On AoE Cloud Effect (depuis 2.2-dev21) - A l'effet d'un nuage de particule (potion)
+# [on] (area|AoE) [cloud] effect
+# ("loop affected entities" Ajouté à ma demande)
+on area cloud effect:
+	loop affected entities:
+		broadcast "&9Un effet de : &7%event-potion% &9a été appliqué a %loop-value%"
+	
+# On Bed Enter (depuis 1.0) - A l'entrée dans un lit
+# [on] bed enter[ing]
+on bed enter:
+	if player is not holding a feather:
+		if bed of player exists:
+			cancel event
+			send "&6Attention ! Vous avez dormi dans un autre lit précédement"
+			send "&9Voici sa position : &7%player's bed location%"
+			send "&9Pour changer de lit, cliquez avec une plume"
+
+# On Bed Leave (depuis 1.0) - A la sortie d'un lit
+# [on] bed leav(e|ing)
+# ("color of event-block" ajouté à ma demande)
+on bed leave:
+	if "%color of event-block%" is "yellow":
+		send "&cSaligot ! T'as pissé dans ton lit !"
+		
+# On Block Damage (depuis 1.0) - Aux dommages portés à un block
+# [on] block damag(ing|e)
+on block damage:
+	if event-block is log:
+		play sound "block.wood.break" at event-location
+		loop blocks upwards:
+			drop loop-block-1 at event-block
+			set loop-block-1 to air
+			loop blocks in radius 3 around loop-block-1:
+				if loop-block-2 is log:
+					drop loop-block-2 at loop-block-2
+					set loop-block-2 to air
+					
+# On Block Growth (depuis 2.2-Fixes-V10) - A la croissance d'une plante
+# [on] (plant|crop|block) grow[(th|ing)] [[of] %item types%]
+on crop growth:
+	if event-block is wheat:
+		if data value of event-block is 8:
+			drop event-block at event-block's location
+			set event-block to event-block
+			
+# On Book Edit (depuis 2.2-dev31) - A l'édition d'un livre
+# [on] book (edit|change|write)
+on book edit:
+	set {_firstPage} to page 1 of event-item
+	send "&9Contenu de la page 1 : "
+	send "&7%{_firstPage}%"
+	
+	set {_book::*} to all the content of event-item
+	loop {_book::*}:
+		send "&9%loop-index% - &7%loop-value%"
+		
+# On Book Sign (2.2-dev31) - A la publication d'un livre
+# [on] book sign[ing]
+on book sign:
+    send "&2Vous venez de publier votre livre, bravo !" to {_player}
+    send "-----------------------------------------------------"
+    send "&9Auteur : &7%author of event-item%"
+    send "&9Titre du livre : &7%title of event-item%"
+    send "&9Nombre de pages : &7%size of content of event-item%"
+
+# On Break / Mine (1.0 (break), unknown (mine) - (Au cassage / minage d'un bloc)
+# [on] [block] (break[ing]|min(e|ing)) [[of] %item types%]
+on break of stone:
+	chance of 25%:
+		spawn vex at event-location
+
+on mine:
+	if event-block is coal ore:
+		loop blocks in radius 3 around player:
+			if loop-block is a chest:
+				wait 1 tick
+				delete dropped items in radius 0.5 of event-location
+				add 1 coal to loop-block's inventory
+
+# On Bucket Empty (depuis 1.0) - (Au vidage d'un seau)
+# [on] bucket empty[ing]
+
+on bucket empty:
+	if humidity of event-block is 0:
+		cancel event
+		play sound "block.fire.extinguish" with volume 0.5 at event-location
+		show smoke 0.25 above event-location in radius of 3
+	
+# On Bucket Fill (depuis 1.0) - (Au remplissage d'un seau)
+# [on] bucket fill[ing]
+
+on bucket fill:
+    send "Dediou ! Pèse son poids le saligaud !" to player
+
+# Créer un événement bucket sur-mesure avec Sk-Mirror
+# Dernière release : https://github.com/btk5h/skript-mirror/releases
+# Doc : https://skript-mirror.gitbook.io/docs/v/2.x/
+
+import:
+    org.bukkit.event.player.PlayerInteractEntityEvent
+    org.bukkit.event.player.PlayerBucketEvent
+    org.bukkit.event.player.PlayerBucketEmptyEvent
+    org.bukkit.event.player.PlayerBucketFillEvent
+
+on PlayerInteractEntityEvent and PlayerBucketFillEvent and PlayerBucketEmptyEvent:
+    if event.getEventName() is "PlayerBucketEmptyEvent" or "PlayerBucketFillEvent":
+        send "%event.getEventName()%" to event.getPlayer()
+        send "%event.getBlockClicked()%" to event.getPlayer()
+    if event.getEventName() is "PlayerInteractEntityEvent":
+        send "%event.getEventName()%" to event.getPlayer()
+        send "%event.getRightClicked()%" to event.getPlayer()
+
+# On Burn (depuis 1.0) - (A la carbonisation d'un bloc)
+# [on] [block] burn[ing] [[of] %item types%]
+
+on burn of any log:
+	wait 1 tick
+	set {_burnedBlockType} to block of coal
+	set event-block to black concrete
+	set metadata value "seeAs" of event-block to "%{_burnedBlockType}%"
+	loop players:
+		wait 1 tick
+		make loop-player see event-block as {_burnedBlockType}
+		loop blocks in radius 2 around event-block:
+			if loop-block is grass:
+				wait 1 tick
+				set loop-block to coarse dirt
+					
+on right click:
+	set {_burnedBlockType} to block of coal
+	if event-block has metadata "seeAs":
+		if metadata value "seeAs" of event-block is "%{_burnedBlockType}%":
+			wait 1 tick
+			make player see event-block as {_burnedBlockType}
+
+# On Can Build Check (depuis 1.0 [basique], 2.0 [(dés-)annulable]) - (A la vérification du droit de construction)
+# [on] [block] can build check
+
+on leftclick with a wooden axe:
+	cancel event
+	set metadata value "cuboid_A" of player to event-block
+	message "&bPoint A défini"
+on rightclick with a wooden axe:
+	message "&bPoint B défini"
+	set {_a.x} to round down x-coord of metadata value "cuboid_A" of player
+	set {_a.y} to round down y-coord of metadata value "cuboid_A" of player
+	set {_a.z} to round down z-coord of metadata value "cuboid_A" of player
+	set {_b.x} to round down x-coord of event-block
+	set {_b.y} to round down y-coord of event-block
+	set {_b.z} to round down z-coord of event-block
+	if {_a.x} is smaller than {_b.x}:
+		set {_ab.x} to "%{_a.x}%,%{_b.x}%"
+	else:
+		set {_ab.x} to "%{_b.x}%,%{_a.x}%"
+	if {_a.y} is smaller than {_b.y}:
+		set {_ab.y} to "%{_a.y}%,%{_b.y}%"
+	else:
+		set {_ab.y} to "%{_b.y}%,%{_a.y}%"
+	if {_a.z} is smaller than {_b.z}:
+		set {_ab.z} to "%{_a.z}%,%{_b.z}%"
+	else:
+		set {_ab.z} to "%{_b.z}%,%{_a.z}%"
+	set {cuboid} to "%{_ab.x}%,%{_ab.y}%,%{_ab.z}%"
+	send "&6Cette zone est dorénavant interdite de construction"
+on can build check:
+	set {_coords::*} to {cuboid} split at ","
+	loop {_coords::*}:
+		set {_coord_%loop-index%} to loop-value parsed as number
+	if round down x-coord of event-block is between {_coord_1} and {_coord_2}:
+		if round down y-coord of event-block is between {_coord_3} and {_coord_4}:
+			if round down z-coord of event-block is between {_coord_5} and {_coord_6}:
+				cancel event
+				
+# On Chat (depuis 1.4.1) - (A l'envoi d'un message)
+# [on] chat
+
+function format(msg: text, rainbow: boolean) :: text:
+	if {_rainbow} is true:
+		set {_rainbowColors::*} to split "&4, &6, &e, &a, &b, &9, &5" at ", "
+		set {_allMessageLetters::*} to {_msg} split at ""
+		set {_colorSwitcher} to 1
+		loop {_allMessageLetters::*}:
+			if loop-value-1 is not " ":
+				set {_allMessageLetters::%loop-index%} to "%{_rainbowColors::%{_colorSwitcher}%}%%loop-value%"
+				if {_colorSwitcher} is less than size of {_rainbowColors::*}:
+					add 1 to {_colorSwitcher}
+				else:
+					set {_colorSwitcher} to 1
+		set {_message} to join {_allMessageLetters::*} by ""
+		return {_message}
+	else:
+		set {_message::*} to {_msg} split at " "
+		loop {_message::*}:
+			# Si c'est une adresse web, on color en bleu
+			if loop-value contains "http":
+				set {_message::%loop-index%} to "&9%loop-value%"
+			# Sinon on se contente de convertir les codes couleur... en couleur :)
+			else:
+				set {_message::%loop-index%} to colored loop-value
+		set {_message} to join {_message::*} by " "
+		return {_message}
+
+on chat:
+	cancel event
+	set {_message} to format(message, true)
+	broadcast "%{_message}%"
+	
+	
+# ----------------------------------------------------------------
+# Des améliorations seront sans doute apportées aux événements
+# chunk, afin de les rendre réellement exploitable (Snow-Pyon)
+# ----------------------------------------------------------------
+	
+# On Chunk Generate (depuis 1.0) - (A la génération d'un chunk)
+# [on] chunk (generat|populat)(e|ing)
+
+# on chunk generate:
+	# broadcast "%event-chunk% - %event-world%"
+
+# On Chunk Load (depuis 1.0) - (Au chargement d'un chunk)
+# [on] chunk load[ing]
+
+# on chunk load:
+	# broadcast "%event-chunk% - %event-world%"
+	
+# On chunk unload (depuis 1.0) - (Au déchargement d'un chunk)
+# [on] chunk unload[ing]
+
+# on chunk unload:
+	# broadcast "%event-chunk% - %event-world%"
+	
+# -----------------------------------------------------------------
+
+# On Click (depuis 1.0) - (Au clic gauche ou droit)
+# [on] [(right|left)[( |-)]][mouse[( |-)]]click[ing] [on %entity type/item type%] [(with|using|holding) %item type%]
+
+on right click with a feather:
+	cancel event
+	set facing of the clicked block to event-direction
+	
+on right click on an entity holding an helmet:
+	set helmet of clicked entity to held item of player
+	
+# On Combust (depuis 1.0) - (A la combustion d'une identité)
+# [on] combust[ing]
+
+on combust:
+	wait 3 seconds
+	set helmet of event-entity to leather helmet
+				
+# On Command (depuis 2.0) - (A l'envoi d'une commande)
+# [on] command [%text%]
+
+on command:
+	if command is "plugins":
+		if command sender is not op:
+			cancel event
+			send "&4Vous n'êtes pas autorisé à voir les plugins de ce serveur"
+			
+options:
+	guide: Pablo
+			
+function rp(joueur: player, reponse: text):
+	set {_UUID_du_joueur} to UUID of {_joueur}
+	send "%{rp.questionnaire.%{_UUID_du_joueur}%.etape}%" to {_joueur}
+	send "%{_reponse}%" to {_joueur}
+	if {rp.questionnaire.%{_UUID_du_joueur}%.etape} isn't set:
+		send "&2{@guide} &9- Bonjour %{_joueur}% ! Bienvenue dans NomDuServeurAChoisir !" to {_joueur}
+		send "&2{@guide} &9- Je devine que tu viens d'arriver en ville et que tu as besoin d'argent." to {_joueur}
+		send "&2{@guide} &9- Voici donc 800€ pour commencer ton aventure :)" to {_joueur}
+		add 800 to {_joueur}'s balance
+		send "---------------------" to {_joueur}
+		send "&2{@guide} &9- Vous possédez désormais : %{_joueur}'s balance%" to {_joueur}
+		send "---------------------" to {_joueur}
+		set {rp.questionnaire.%{_UUID_du_joueur}%.attendre_reponse} to false
+		set {rp.questionnaire.%{_UUID_du_joueur}%.etape} to 1
+		rp({_joueur}, "")
+		stop
+	# ----------------
+	#       Nom
+	# ----------------
+	if {rp.questionnaire.%{_UUID_du_joueur}%.etape} is 1:
+		if {rp.questionnaire.%{_UUID_du_joueur}%.attendre_reponse} is false:
+			send "&2{@guide} &9- Choisis le nom de tes rêves que tu auras pendant ta vie dans le rp ! (Tu pourras bien sûr le changer quand tu mourras, mais ne pensons pas à cela tout de suite !)" to {_joueur}
+			send "&2{@guide} &9- Tape dans dans le chat le nom que tu veux dans le chat, sans rien avant : " to {_joueur}
+			set {rp.questionnaire.%{_UUID_du_joueur}%.attendre_reponse} to true
+		else:
+			set {rp.%{_UUID_du_joueur}%::nom} to {_reponse}
+			send "&2{@guide} &9- Très bien, ton nom est donc %{_reponse}%" to {_joueur}
+			set {rp.questionnaire.%{_UUID_du_joueur}%.attendre_reponse} to false
+			set {rp.questionnaire.%{_UUID_du_joueur}%.etape} to 2
+			rp({_joueur}, "")
+			stop
+	# ----------------
+	#       Age
+	# ----------------
+	if {rp.questionnaire.%{_UUID_du_joueur}%.etape} is 2:
+		if {rp.questionnaire.%{_UUID_du_joueur}%.attendre_reponse} is false:
+			send "&2{@guide} &9- Choisis ton âge entre 18 et 120 ans !" to {_joueur}
+			set {rp.questionnaire.%{_UUID_du_joueur}%.attendre_reponse} to true
+		else:
+			set {rp.%{_UUID_du_joueur}%::age} to {_reponse}
+			send "&2{@guide} &9- Très bien, tu as donc %{_reponse}% ans" to {_joueur}
+			set {rp.questionnaire.%{_UUID_du_joueur}%.attendre_reponse} to false
+			set {rp.questionnaire.%{_UUID_du_joueur}%.etape} to 3
+			rp({_joueur}, "")
+			stop
+	# ----------------
+	#       Pays
+	# ----------------
+	if {rp.questionnaire.%{_UUID_du_joueur}%.etape} is 3:
+		if {rp.questionnaire.%{_UUID_du_joueur}%.attendre_reponse} is false:
+			send "&2{@guide} &9- Choisis ton pays d'origine !" to {_joueur}
+			set {rp.questionnaire.%{_UUID_du_joueur}%.attendre_reponse} to true
+		else:
+			set {rp.%{_UUID_du_joueur}%::pays} to {_reponse}
+			send "&2{@guide} &9- Très bien, ton pays d'origine est donc : %{_reponse}%" to {_joueur}
+			set {rp.questionnaire.%{_UUID_du_joueur}%.attendre_reponse} to false
+			set {rp.questionnaire.%{_UUID_du_joueur}%.etape} to 4
+			rp({_joueur}, "")
+			stop
+	# ----------------
+	#   Confirmation
+	# ----------------
+	if {rp.questionnaire.%{_UUID_du_joueur}%.etape} is 4:
+		if {rp.questionnaire.%{_UUID_du_joueur}%.attendre_reponse} is false:
+			send "&2{@guide} &9- Tu t'appeles donc %{rp.%{_UUID_du_joueur}%::nom}%, tu as %{rp.%{_UUID_du_joueur}%::age}% et ton pays d'origine est %{rp.%{_UUID_du_joueur}%::pays}%" to {_joueur}
+			send "&2{@guide} &9- Tape ""oui"" pour confirmer ces données ou ""non"" pour recommencer le questionnaire : " to {_joueur}
+			set {rp.questionnaire.%{_UUID_du_joueur}%.attendre_reponse} to true
+		else:
+			if {_reponse} is "oui":
+				send "&2{@guide} &9- D'accord :) Réponses validées !" to {_joueur}
+				set {rp.questionnaire.%{_UUID_du_joueur}%.rempli} to true
+				clear {rp.questionnaire.%{_UUID_du_joueur}%.attendre_reponse}
+				clear {rp.questionnaire.%{_UUID_du_joueur}%.etape}
+				
+			else if {_reponse} is "non":
+				send "&2{@guide} &9- Très bien. Dans ce cas, répond de nouveau au questionnaire" to {_joueur}
+				clear {rp.%{_UUID_du_joueur}%::*}
+				set {rp.questionnaire.%{_UUID_du_joueur}%.attendre_reponse} to false
+				set {rp.questionnaire.%{_UUID_du_joueur}%.etape} to 1
+				rp({_joueur}, "")
+			else:
+				send "&2{@guide} &9- Réponse incorrect. Veuillez répondre par ""oui"" ou par ""non""." to {_joueur}
+
+on right click on entity:
+	if name of clicked entity is "{@guide}":
+		if {rp.questionnaire.%player's UUID%.rempli} is not true:
+			rp(player, "")
+		else:
+			send "&2{@guide} &9- Vous avez déjà répondu à ce questionnaire" to player
+
+on chat:
+	cancel event
+	if {rp.questionnaire.%player's uuid%.attendre_reponse} is set:
+		if {rp.questionnaire.%player's uuid%.attendre_reponse} is true:
+			rp(player, message)
+		
+		
+command /pablo:
+	trigger:
+		spawn a villager at player's location
+		set the name of last spawned entity to "Pablo"
+		
+command /resetpablo:
+	trigger:
+		set {_UUID_du_joueur} to uuid of player
+		broadcast "%{_UUID_du_joueur}%"
+		clear {rp.questionnaire.%{_UUID_du_joueur}%.rempli}
+		clear {rp.%{_UUID_du_joueur}%::*}
+		clear {rp.questionnaire.%{_UUID_du_joueur}%.etape}
+		clear {rp.questionnaire.%{_UUID_du_joueur}%.attendre_reponse}
+			
+	
+
+

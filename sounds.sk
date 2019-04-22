@@ -1,0 +1,89 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+on right click with music disc:
+	play sound "ambient.underwater.loop.additions.ultra_rare" with volume 0.9 at player
+
+command /sounds <text="all">:
+	trigger:
+		# Ambiance
+		add "ambient.cave" to {_sounds.ambient::*}
+		add "ambient.underwater.enter" to {_sounds.ambient::*}
+		add "ambient.underwater.enter" to {_sounds.ambient::*}
+		add "ambient.underwater.exit" to {_sounds.ambient::*}
+		add "ambient.underwater.loop" to {_sounds.ambient::*}
+		add "ambient.underwater.loop.additions" to {_sounds.ambient::*}
+		add "ambient.underwater.loop.additions.rare" to {_sounds.ambient::*}
+		add "ambient.underwater.loop.additions.ultra_rare" to {_sounds.ambient::*}
+		# Block
+		add "block.anvil.break" to {_sounds.block::*}
+		add "block.anvil.destroy" to {_sounds.block::*}
+		add "block.anvil.fall" to {_sounds.block::*}
+		add "block.anvil.hit" to {_sounds.block::*}
+		add "block.anvil.land" to {_sounds.block::*}
+		add "block.anvil.place" to {_sounds.block::*}
+		add "block.anvil.step" to {_sounds.block::*}
+		add "block.anvil.use" to {_sounds.block::*}
+		add "block.beacon.activate" to {_sounds.block::*}
+		add "block.beacon.ambient" to {_sounds.block::*}
+		add "block.beacon.deactivate" to {_sounds.block::*}
+		add "block.beacon.power_select" to {_sounds.block::*}
+		add "block.brewing_stand.brew" to {_sounds.block::*}
+		add "block.bubble_column.bubble_pop" to {_sounds.block::*}
+		add "block.bubble_column.upwards_ambient" to {_sounds.block::*}
+		add "block.bubble_column.upwards_inside" to {_sounds.block::*}
+		add "block.bubble_column.whirlpool_ambient" to {_sounds.block::*}
+		add "block.bubble_column.whirlpool_inside" to {_sounds.block::*}
+		add "block.chest.close" to {_sounds.block::*}
+		add "block.chest.locked" to {_sounds.block::*}
+		add "block.chest.open" to {_sounds.block::*}
+		add "block.chorus_flower.death" to {_sounds.block::*}
+		add "block.chorus_flower.grow" to {_sounds.block::*}
+		add "block.comparator.click" to {_sounds.block::*}
+		add "block.conduit.activate" to {_sounds.block::*}
+		add "block.conduit.ambient" to {_sounds.block::*}
+		add "block.conduit.ambient.short" to {_sounds.block::*}
+		add "block.conduit.attack.target" to {_sounds.block::*}
+		add "block.conduit.deactivate" to {_sounds.block::*}
+		add "block.dispenser.dispense" to {_sounds.block::*}
+		add "block.dispenser.fail" to {_sounds.block::*}
+		add "block.dispenser.launch" to {_sounds.block::*}
+		add "block.enchantment_table.use" to {_sounds.block::*}
+		add "block.end_gateway.spawn" to {_sounds.block::*}
+		add "block.end_portal.spawn" to {_sounds.block::*}
+		add "block.end_portal_frame.fill" to {_sounds.block::*}
+		add "block.ender_chest.close" to {_sounds.block::*}
+		add "block.ender_chest.open" to {_sounds.block::*}
+		add "block.fence_gate.close" to {_sounds.block::*}
+		
+		if arg-1 is "all":
+			
+		
+	

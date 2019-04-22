@@ -1,0 +1,89 @@
+#  _____            _ _     _   _         _____                __  __ _ _ _    _             
+# |  __ \          | (_)   | | (_)       / ____|              |  \/  (_) | |  (_)            
+# | |__) |___  __ _| |_ ___| |_ _  ___  | |     _____      __ | \  / |_| | | ___ _ __   __ _ 
+# |  _  // _ \/ _` | | / __| __| |/ __| | |    / _ \ \ /\ / / | |\/| | | | |/ / | '_ \ / _` |
+# | | \ \  __/ (_| | | \__ \ |_| | (__  | |___| (_) \ V  V /  | |  | | | |   <| | | | | (_| |
+# |_|  \_\___|\__,_|_|_|___/\__|_|\___|  \_____\___/ \_/\_/   |_|  |_|_|_|_|\_\_|_| |_|\__, |
+#                                                                                       __/ |
+#                                                                                      |___/ 
+
+# ===========================================================================================
+
+# PREREQUIS : Skript-Mirror (permet d'utiliser du Java au sein de Skript)
+# ----------------------------------------------------------------------- 
+# Dernière release : https://github.com/btk5h/skript-mirror/releases
+# Doc : https://skript-mirror.gitbook.io/docs/v/2.x/
+
+# Note : La version de Skript utilisée dans ce script est la 2.3.6 (utilisée avec la version 1.13.2 de Spigot)
+# Vous pouvez la télécharger ici https://github.com/SkriptLang/Skript/releases
+# N'oubliez pas de vous référer à la documentation officielle de Bensku ici...
+# https://skriptlang.github.io/Skript
+# ... et de suivre l'évolution de la documentation francophone de Skript-MC là :
+# https://skript-mc.fr/documentation/skript
+
+# DESCRIPTION :
+# -----------------------------------------------------------------------
+# L'objectif de ce code, en dehors de son utilité toute relative :D
+# - c'est-à-dire limiter la traite des vaches (3 traites toutes les 1 minute) -,
+# c'était surtout de créer un mixe d'événements qui permette, lorsqu'on utilise le seau,
+# de pouvoir soit détecter l'entité de laquelle on souhaite récupérer une substance
+# - ici du lait (en même temps je vois pas d'autres entités du genre :D) -, 
+# soit le block que l'on vide ou que l'on remplit.
+# C'est une forme d'extension des événements "on bucket empty" et "on bucket fill".
+# 
+# Le script utilise également des metadatas, c'est-à-dire les données que l'on peut
+# directement enregistrées dans une entité ou un bloc, ce qui est bien pratique.
+# Cela évite, dans certains cas, d'avoir à sauvegarder des variables.
+		
+import:
+	org.bukkit.event.player.PlayerInteractEntityEvent
+	org.bukkit.event.player.PlayerBucketEvent
+	org.bukkit.event.player.PlayerBucketEmptyEvent
+	org.bukkit.event.player.PlayerBucketFillEvent
+		
+on PlayerInteractEntityEvent and PlayerBucketFillEvent and PlayerBucketEmptyEvent:
+	if event.getEventName() is "PlayerInteractEntityEvent":
+		if event.getRightClicked() is a cow:
+			set {_player} to event.getPlayer()
+			set {_entity} to event.getRightClicked()
+			if {_entity} has metadata "amountOfMilk":
+				set {_coolDown} to metadata value "cooldown" of {_entity}
+				if {_entity} doesn't have metadata "lastMilking":
+					if metadata value "amountOfMilk" of {_entity} > 1:
+						set {_milk} to metadata value "amountOfMilk" of {_entity}
+						set {_milk} to {_milk} - 1
+						set metadata value "amountOfMilk" of {_entity} to {_milk}
+						send "&9Vous pouvez prélever encore %{_milk}% seau(x)" to {_player}
+					else:
+						set {_waitingTime} to metadata value "cooldown" of {_entity}
+						set metadata value "lastMilking" of {_entity} to now
+						send "&6La vache n'a plus de lait" to {_player}
+						send "&6Prochaine traite dans %{_waitingTime}%" to {_player}
+				else:
+					set {_lastMilking} to metadata value "lastMilking" of {_entity}
+					set {_elapsedTime} to difference between {_lastMilking} and now
+					if {_elapsedTime} is less than {_coolDown}:
+						cancel event
+						set {_player}'s tool to empty bucket
+						set metadata value "amountOfMilk" of {_entity} to 3
+						set {_haveToWait} to difference between {_coolDown} and {_elapsedTime}
+						send "&6Vous devez attendre &7%{_haveToWait}%" to {_player}
+					else:
+						if metadata value "amountOfMilk" of {_entity} > 1:
+							set {_milk} to metadata value "amountOfMilk" of {_entity}
+							set {_milk} to {_milk} - 1
+							set metadata value "amountOfMilk" of {_entity} to {_milk}
+							send "&9Vous pouvez prélever encore %{_milk}% seau(x)" to {_player}
+						else:
+							set {_waitingTime} to metadata value "cooldown" of {_entity}
+							set metadata value "lastMilking" of {_entity} to now
+							send "&6La vache n'a plus de lait" to {_player}
+							send "&6Prochaine traite dans %{_waitingTime}%" to {_player}
+						
+			else:
+				set metadata value "amountOfMilk" of {_entity} to 3
+				set metadata value "cooldown" of {_entity} to 1 minute
+				set {_milk} to metadata value "amountOfMilk" of {_entity}
+				set {_milk} to {_milk} - 1
+				set metadata value "amountOfMilk" of {_entity} to {_milk}
+				send "&9Vous pouvez prélever encore %{_milk}% seau(x)" to {_player}

@@ -1,0 +1,35 @@
+on damage:
+	if victim is player:
+		cancel event
+command /fly:
+	trigger:
+		set player's flight mode to true
+command /exterminate:
+	trigger:
+		kill all entities
+		
+		
+command /test:
+	trigger:
+		open chest inventory with 6 row with name "Test" to player
+
+on inventory open:
+	wait 1 tick
+	if name of event-inventory is "Test":
+		set {test} to enchanted book of bane of arthropods with data 1
+		set slot 0 of open inventory of player to stone named "truc" with lore "Ma première phrase de lore", "Ma seconde" and "Ma troisième"
+		set slot 1 of open inventory of player to enchanted book of curse of vanishing
+		set slot 2 of open inventory of player to {test}
+	wait 1 tick
+	loop items of event-inventory:
+		send "%type of loop-item%"
+		send "%enchantments of loop-item%"
+
+
+on inventory click:
+	if name of event-inventory is "Test":
+		send "%index of event-slot%"
+		wait 1 tick
+		set slot index of event-slot of open inventory of player to {test}	
+	
+	
