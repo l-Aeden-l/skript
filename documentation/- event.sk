@@ -271,8 +271,27 @@ on command:
 			cancel event
 			send "&4Vous n'êtes pas autorisé à voir les plugins de ce serveur"
 			
+# On connect (depuis 2.0) - (A la connexion d'un joueur au serveur)
+# [on] [player] connect[ing]
 
+on connect:
+    #kick the player due to "VOUS... NE PASSEREZ... PAS !"
 			
-	
+# On Consume (depuis 2.0) - (A la consommation d'un[e] aliment | boisson)
+# [on] [player] ((eat|drink)[ing]|consum(e|ing)) [[of] %item types%]
 
+on consume:
+    wait 1 tick # Pour se donner le temps de détecter les items et effets
 
+    if event-item is edible:
+        if event-item is rotten flesh:
+            send "&cRecrache ça malheureux ! Cette viande est faisandée."
+
+    if player is poisoned:
+        cure the player from poison
+        send "&3Vous êtes immunisé contre le poison" to player
+        
+    if event-item is beef:
+        chance of 25%:
+            feed the player by 7 beefs
+            send "&2Dediou ! Il était sur-vitaminé ce steak :D"

@@ -1,38 +1,17 @@
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+# anvil, beacon, brewing stand, bubble coral, chest, chorus flower, comparator,
+# conduit, dispenser, enchanting table, end portal frame, ender chest, fence gate,
+# torch, furnace, glass, grass path, grass block, tube coral block, gravel, iron door,
+# iron trapdoor, ladder, lava bucket, lever, lily pad, iron block, iron pressure plate,
+# note block, piston, obsidian, pumpkin, redstone torch, sand, shulker box, slime block,
+# snow block, stone, stone button, stone pressure plate, tripwire hook, water bucket,
+# oak wood, oak button, oak door, oak pressure plate, oak trapdoor, white wool, enchanted book,
+# armor stand, arrow, bat spawn egg, blaze spawn egg, oak boat, ocelot spawn egg
 
 
 on right click with music disc:
-	play sound "ambient.underwater.loop.additions.ultra_rare" with volume 0.9 at player
+	play sound "enchant.thorns.hit" with volume 0.9 at player
 
-command /sounds <text="all">:
-	trigger:
+command /sounds
 		# Ambiance
 		add "ambient.cave" to {_sounds.ambient::*}
 		add "ambient.underwater.enter" to {_sounds.ambient::*}
@@ -82,7 +61,35 @@ command /sounds <text="all">:
 		add "block.ender_chest.close" to {_sounds.block::*}
 		add "block.ender_chest.open" to {_sounds.block::*}
 		add "block.fence_gate.close" to {_sounds.block::*}
-		
+        add "block.fence_gate.open" to {_sounds.block::*}
+        add "block.fire.ambient" to {_sounds.block::*}
+        add "block.fire.extinguish" to {_sounds.block::*}
+        add "block.furnace.fire_crackle" to {_sounds.block::*}
+        add "block.glass.break" to {_sounds.block::*}
+        add "block.glass.fall" to {_sounds.block::*}
+        add "block.glass.hit" to {_sounds.block::*}
+        add "block.glass.place" to {_sounds.block::*}
+        add "block.glass.step" to {_sounds.block::*}
+        add "block.grass.break" to {_sounds.block::*}
+        add "block.grass.fall" to {_sounds.block::*}
+        add "block.grass.hit" to {_sounds.block::*}
+        add "block.grass.place" to {_sounds.block::*}
+        add "block.grass.step" to {_sounds.block::*}
+        add "block.wet_grass.break" to {_sounds.block::*}
+        add "block.wet_grass.fall" to {_sounds.block::*}
+        add "block.wet_grass.hit" to {_sounds.block::*}
+        add "block.wet_grass.place" to {_sounds.block::*}
+        add "block.wet_grass.step" to {_sounds.block::*}
+        add "block.coral_block.break" to {_sounds.block::*}
+        add "block.coral_block.fall" to {_sounds.block::*}
+        add "block.coral_block.hit" to {_sounds.block::*}
+        add "block.coral_block.place" to {_sounds.block::*}
+        add "block.coral_block.step" to {_sounds.block::*}
+        add "block.gravel.break" to {_sounds.block::*}
+        add "block.gravel.fall" to {_sounds.block::*}
+        add "block.gravel.hit" to {_sounds.block::*}
+        add "block.gravel.place" to {_sounds.block::*}
+        add "block.gravel.step" to {_sounds.block::*}
 		if arg-1 is "all":
 			
 		

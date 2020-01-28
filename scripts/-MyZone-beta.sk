@@ -105,7 +105,7 @@ command /mzaddzone <text>:
 					exit loop
 				else:
 					loop {mz.players::*}:
-						set {_data::*} to loop-value split by "|"
+						set {_data::*} to loop-value-2 split by "|"
 						if player's uuid is {_data::1}:
 							set {_playerFound} to true
 							add "%arg-1%|%{mz.%player's uuid%.selectedArea}%" to {mz.players::%loop-index%::zones::*}

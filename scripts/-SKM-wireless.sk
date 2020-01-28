@@ -50,13 +50,13 @@ on sign change:
             set line 4 to "%player%"
             message "{@notification} Récepteur défini sur le réseau %line 3%" to player
             if facing of event-block is north:
-                set block 2 behind event-block to lever:3
+                set block 2 south of event-block to south facing lever
             if facing of event-block is south:
-                set block 2 behind event-block to lever:4
+                set block 2 north of event-block to north facing lever
             if facing of event-block is east:
-                set block 2 behind event-block to lever:2
+                set block 2 west of event-block to west facing lever
             if facing of event-block is west:
-                set block 2 behind event-block to lever:1
+                set block 2 east of event-block to east facing lever
             set {_type} to "receivers"
     
     if {_type} is set:
@@ -166,20 +166,28 @@ on break:
 # du propriétaire sera effectué afin que les récepteurs de celui-ci soit activés.
 # ---------------------------------------------------------------------------------------    
 on redstone:
-    set {_directions::1} to in front of
-    set {_directions::2} to behind
-    set {_directions::3} to left
-    set {_directions::4} to right
-    loop {_directions::*}:
+    set {_directions_a::1} to north of
+    set {_directions_a::2} to south of
+    set {_directions_a::3} to east of
+    set {_directions_a::4} to west of
+    
+    set {_directions_b::1} to 2 north of
+    set {_directions_b::2} to 2 south of
+    set {_directions_b::3} to 2 east of
+    set {_directions_b::4} to 2 west of
+    loop {_directions_a::*}:
         if block loop-value-1 event-block is a sign:
             if uncoloured line 2 of block loop-value-1 event-block is uncoloured "{@transmitter}":
                 loop players:
-                    loop {skm.wireless.%loop-player's uuid%::networks::*}:
+                    set {_uuid_of_player} to loop-player's uuid
+                    loop {skm.wireless.%{_uuid_of_player}%::networks::*}:
+                        broadcast "sqdf sdf%loop-value-3%"
                         if uncoloured loop-value-3 is uncoloured line 3 of block loop-value-1 event-block:
-                            loop {skm.wireless.%loop-player's uuid%::networks::%loop-index-2%::transmitters::*}:
+                            loop {skm.wireless.%{_uuid_of_player}%::networks::%loop-index-2%::transmitters::*}:
                                 if location of block loop-value-1 event-block is loop-value-4:
-                                    loop {skm.wireless.%loop-player's uuid%::networks::%loop-index-2%::receivers::*}:
-                                        toggle block 2 behind block at loop-value-5
+                                    loop {skm.wireless.%{_uuid_of_player}%::networks::%loop-index-2%::receivers::*}:
+                                        loop {_directions_b::*}:
+                                            toggle block loop-value-6 block at loop-value-5
 
 
         
@@ -316,3 +324,4 @@ command /skm-wireless-tp <text> <int> <int>:
                     message "&cL'ID de %{_data::1}% n'existe pas" to player
             else:
                 message "{@alert} L'ID de ce réseau n'existe pas" to player
+                

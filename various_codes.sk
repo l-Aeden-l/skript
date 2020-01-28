@@ -58,6 +58,11 @@ on place of mob spawner:
 # Système de questionnaire
 # Important (bug) : On doit stocker l'UUID dans
 # une variable avant de l'inclure dans une autre.
+# --------------------------------------------
+# Le bug "if {rp.questionnaire.%{_joueur}'s UUID%.etape} is 1:"
+# Can't compare "{rp.questionnaire.%{_joueur}'s UUID%.etape}" with an integer
+# Status: wait and see XD
+# --------------------------------------------
 # Réalisé pour : Twah2em | Requière : Skript
 # ============================================
 
@@ -173,3 +178,4 @@ command /resetpablo:
 		clear {rp.%{_UUID_du_joueur}%::*}
 		clear {rp.questionnaire.%{_UUID_du_joueur}%.etape}
 		clear {rp.questionnaire.%{_UUID_du_joueur}%.attendre_reponse}
+        
